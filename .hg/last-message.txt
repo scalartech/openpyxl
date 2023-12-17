@@ -1,0 +1,3 @@
+Modify Header Footer to allow user to manually set where the picture @G is inserted into the text.  
+If multiple header images are used in the same file, it creates a single vmlDrawing with multiple shapes, up to one shape per header location.   
+
