@@ -387,7 +387,7 @@ class WorksheetReader(object):
 
     def bind_tables(self):
         for t in self.parser.tables.tablePart:
-            rel = self.ws._rels.get(t.id)
+            rel = self.ws._rels[t.id]
             self.tables.append(rel.Target)
 
 
@@ -408,7 +408,7 @@ class WorksheetReader(object):
     def bind_hyperlinks(self):
         for link in self.parser.hyperlinks.hyperlink:
             if link.id:
-                rel = self.ws._rels.get(link.id)
+                rel = self.ws._rels[link.id]
                 link.target = rel.Target
             if ":" in link.ref:
                 # range of cells

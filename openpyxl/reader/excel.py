@@ -251,7 +251,7 @@ class ExcelReader:
 
             # preserve link to VML file if VBA
             if self.wb.vba_archive and ws.legacy_drawing:
-                ws.legacy_drawing = rels.get(ws.legacy_drawing).target
+                ws.legacy_drawing = rels[ws.legacy_drawing].target
             else:
                 ws.legacy_drawing = None
 
@@ -270,13 +270,12 @@ class ExcelReader:
                     ws.add_image(im, im.anchor)
 
             pivot_rel = rels.find(TableDefinition.rel_type)
-            pivot_caches = self.parser.pivot_caches
             for r in pivot_rel:
                 pivot_path = r.Target
                 src = self.archive.read(pivot_path)
                 tree = fromstring(src)
                 pivot = TableDefinition.from_tree(tree)
-                pivot.cache = pivot_caches[pivot.cacheId]
+                pivot.cache = self.parser.pivot_caches[pivot.cacheId]
                 ws.add_pivot(pivot)
 
             ws.sheet_state = sheet.state

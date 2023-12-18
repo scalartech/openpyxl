@@ -59,7 +59,6 @@ Thanks to all those who participate in the project (in alphabetical order):
 * Koert van der Veer
 * Laurent Laporte
 * Laurent Vasseur
-* Liam Sanders
 * Maarten De Paepe
 * Magnus Schieder
 * Mark Gemmill

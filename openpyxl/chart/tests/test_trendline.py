@@ -41,10 +41,10 @@ def Trendline():
 class TestTrendline:
 
     def test_ctor(self, Trendline):
-        trendline = Trendline(name="Bob")
+        trendline = Trendline()
         xml = tostring(trendline.to_tree())
         expected = """
-        <trendline name="Bob">
+        <trendline>
           <trendlineType val="linear" />
         </trendline>
         """
@@ -54,10 +54,10 @@ class TestTrendline:
 
     def test_from_xml(self, Trendline):
         src = """
-        <trendline name="Bob">
+        <trendline>
           <trendlineType val="log" />
         </trendline>
         """
         node = fromstring(src)
         trendline = Trendline.from_tree(node)
-        assert trendline == Trendline(trendlineType="log", name="Bob")
+        assert trendline == Trendline(trendlineType="log")

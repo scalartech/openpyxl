@@ -205,17 +205,17 @@ class WorksheetWriter:
 
 
     def write_hyperlinks(self):
+        links = HyperlinkList()
 
-        links = self.ws._hyperlinks
-
-        for link in links:
+        for link in self.ws._hyperlinks:
             if link.target:
                 rel = Relationship(type="hyperlink", TargetMode="External", Target=link.target)
                 self._rels.append(rel)
                 link.id = rel.id
+            links.hyperlink.append(link)
 
         if links:
-            self.xf.send(HyperlinkList(links).to_tree())
+            self.xf.send(links.to_tree())
 
 
     def write_print(self):

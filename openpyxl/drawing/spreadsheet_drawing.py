@@ -333,8 +333,7 @@ class SpreadsheetDrawing(Serialisable):
 
     def _write_rels(self):
         rels = RelationshipList()
-        for r in self._rels:
-            rels.append(r)
+        rels.Relationship = self._rels
         return rels.to_tree()
 
 

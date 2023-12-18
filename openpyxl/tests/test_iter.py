@@ -25,7 +25,6 @@ def DummyWorkbook():
             self.sheetnames = []
             self._archive = ZipFile(BytesIO(), "w")
             self._date_formats = set()
-            self._timedelta_formats = set()
 
     return Workbook()
 
