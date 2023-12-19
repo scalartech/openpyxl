@@ -13,9 +13,7 @@ from openpyxl.xml.constants import SHEET_MAIN_NS
 from openpyxl.comments.comment_sheet import CommentRecord
 from openpyxl.packaging.relationship import Relationship, RelationshipList
 from openpyxl.styles.differential import DifferentialStyle
-from openpyxl.worksheet.header_footer import _HeaderFooterPart, HeaderFooterItem
 
-from openpyxl.worksheet.header_shape_writer import HeaderShapeWriter
 from openpyxl.packaging.relationship import (
     get_rels_path,
     RelationshipList,
@@ -242,7 +240,7 @@ class WorksheetWriter:
             self.xf.send(hf.to_tree())
             # header and footer images require legacyDrawingHF
             if hf.has_image():
-                rel = Relationship(type="vmlDrawing", Target="../drawings/vmlDrawingHF.vml")
+                rel = Relationship(type="vmlDrawing", Target="../drawings/vmlDrawing%s.vml" % self.ws._id)
                 self._rels.append(rel)
                 legacy = Related(id=rel.Id)
                 self.xf.send(legacy.to_tree("legacyDrawingHF"))

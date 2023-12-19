@@ -28,7 +28,6 @@ SIZE_REGEX = r"&(?P<size>\d+\s?)"
 FORMAT_REGEX = re.compile("{0}|{1}|{2}".format(FONT_PATTERN, COLOR_PATTERN,
                                                SIZE_REGEX)
                           )
-HEADER_IMAGE_ANCHORS = ["LH", "CH", "RH", "LF", "CF", "RF"]
 
 def _split_string(text):
     """
@@ -86,36 +85,20 @@ class _HeaderFooterPart(Strict):
     Colours are in RGB Hex
     """
 
-    position = String(allow_none=True)
     text = String(allow_none=True)
     font = String(allow_none=True)
     size = Integer(allow_none=True)
     RGB = ("^[A-Fa-f0-9]{6}$")
     color = MatchPattern(allow_none=True, pattern=RGB)
-    _image = Typed(expected_type=Image, allow_none=True)
+    image = Typed(expected_type=Image, allow_none=True)
 
 
-    def __init__(self, position=None, text=None, font=None, size=None, color=None, image=None):
-        self.position = position
+    def __init__(self, text=None, font=None, size=None, color=None, image=None):
         self.text = text
         self.font = font
         self.size = size
         self.color = color
-        self._image = image
-
-    @property
-    def image(self):
-        return self._image
-
-    @image.setter
-    def image(self, value):
-        if isinstance(value, Image):
-            if self.position is None or self.position not in HEADER_IMAGE_ANCHORS:
-                raise ValueError("The HeaderFooterPart must be assigned a valid position")
-            value.anchor = self.position
-            self._image = value
-        else:
-            raise TypeError("Expected type to be Image")
+        self.image = image
 
     def __str__(self):
         """
@@ -163,22 +146,19 @@ class HeaderFooterItem(Strict):
     center = Typed(expected_type=_HeaderFooterPart)
     centre = Alias("center")
     right = Typed(expected_type=_HeaderFooterPart)
-    is_header = Bool(allow_none=False)
 
     __keys = ('L', 'C', 'R')
 
 
-    def __init__(self, is_header=True, left=None, right=None, center=None):
-        self.is_header = is_header
-        position = 'H' if is_header else 'F'
+    def __init__(self, left=None, right=None, center=None):
         if left is None:
-            left = _HeaderFooterPart(f"L{position}")
+            left = _HeaderFooterPart()
         self.left = left
         if center is None:
-            center = _HeaderFooterPart(f"C{position}")
+            center = _HeaderFooterPart()
         self.center = center
         if right is None:
-            right = _HeaderFooterPart(f"R{position}")
+            right = _HeaderFooterPart()
         self.right = right
 
 
@@ -211,12 +191,13 @@ class HeaderFooterItem(Strict):
         txt = SUBS_REGEX.sub(replace, txt)
         return escape(txt)
 
+
     def has_image(self):
         return any([self.left.image, self.center.image, self.right.image])
 
+
     def __bool__(self):
         return any([self.left, self.center, self.right])
-
 
 
     def to_tree(self, tagname):
@@ -274,40 +255,31 @@ class HeaderFooter(Serialisable):
         self.scaleWithDoc = scaleWithDoc
         self.alignWithMargins = alignWithMargins
         if oddHeader is None:
-            oddHeader = HeaderFooterItem(is_header=True)
+            oddHeader = HeaderFooterItem()
         self.oddHeader = oddHeader
         if oddFooter is None:
-            oddFooter = HeaderFooterItem(is_header=True)
+            oddFooter = HeaderFooterItem()
         self.oddFooter = oddFooter
         if evenHeader is None:
-            evenHeader = HeaderFooterItem(is_header=True)
+            evenHeader = HeaderFooterItem()
         self.evenHeader = evenHeader
         if evenFooter is None:
-            evenFooter = HeaderFooterItem(is_header=False)
+            evenFooter = HeaderFooterItem()
         self.evenFooter = evenFooter
         if firstHeader is None:
-            firstHeader = HeaderFooterItem(is_header=False)
+            firstHeader = HeaderFooterItem()
         self.firstHeader = firstHeader
         if firstFooter is None:
-            firstFooter = HeaderFooterItem(is_header=False)
+            firstFooter = HeaderFooterItem()
         self.firstFooter = firstFooter
 
-    def add_image(self, image, anchor):
-        """
-        Add an image to the header or footer
-
-        :param image: openpyxl.drawing.image.Image
-        :param anchor: str
-        """
-        if anchor not in HEADER_IMAGE_ANCHORS:
-            raise ValueError("Invalid anchor position")
-        setattr(self, anchor.lower(), image)
 
     def has_image(self):
         """
         Check if the header or footer contains an image
         """
         return any(getattr(self, attr).has_image() for attr in self.__elements__)
+
 
     def __bool__(self):
         parts = [getattr(self, attr) for attr in self.__attrs__ + self.__elements__]

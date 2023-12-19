@@ -80,6 +80,7 @@ Thanks to all those who participate in the project (in alphabetical order):
 * Stefan Behnel
 * Stephane Bard
 * Stephen Rauch
+* Steven Hansen
 * Sven Burk
 * Ted Pollari
 * Thomas Nygards

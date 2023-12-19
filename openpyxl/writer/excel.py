@@ -32,7 +32,6 @@ from openpyxl.packaging.extended import ExtendedProperties
 from openpyxl.styles.stylesheet import write_stylesheet
 from openpyxl.worksheet._writer import WorksheetWriter
 from openpyxl.workbook._writer import WorkbookWriter
-from openpyxl.worksheet.header_footer import _HeaderFooterPart, HeaderFooterItem
 from openpyxl.worksheet.header_shape_writer import HeaderShapeWriter
 from .theme import theme_xml
 
@@ -124,26 +123,16 @@ class ExcelWriter(object):
         """
         hf = ws.HeaderFooter
        
-        header_shape_writer = HeaderShapeWriter()
-        rels = RelationshipList()
-        for element in hf.__elements__:
-            header_footer_item: HeaderFooterItem = getattr(hf, element)
-            for key in ("left", "center", "right"):
-                header_footer_part: _HeaderFooterPart = getattr(header_footer_item, key)
-                header_image = header_footer_part.image
-                if header_image is not None:
-                    header_shape_writer.add_header_image(header_image)
+        header_shape_writer = HeaderShapeWriter(hf)
 
-                    self._images.append(header_image)
-                    header_image._id = len(self._images)
+        for image in header_shape_writer.images:
+            if image not in self._images:
+                self._images.append(image)
 
-                    rel = Relationship(type="image", Target=header_image.path)
-                    
-                    rels.append(rel)
-                    tree = rels.to_tree()
+        tree = header_shape_writer.rels.to_tree()
 
         vml = header_shape_writer.write(None)
-        header_shape_path = 'xl/drawings/vmlDrawingHF.vml'
+        header_shape_path = 'xl/drawings/vmlDrawing%s.vml' % ws._id
         self._archive.writestr(header_shape_path, vml)
 
         rels_path = get_rels_path(header_shape_path)

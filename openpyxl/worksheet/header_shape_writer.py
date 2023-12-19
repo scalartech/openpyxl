@@ -1,25 +1,96 @@
 # Copyright (c) 2010-2023 openpyxl
 
-from xml.etree.ElementTree import QName
+import os
+from typing import List
+from openpyxl.drawing.image import Image
 from openpyxl.xml.functions import (
     Element,
     SubElement,
     tostring,
 )
-
-from openpyxl.drawing.image import Image
+from openpyxl.descriptors import (
+    Alias,
+    Bool,
+    Strict,
+    String,
+    Integer,
+    MatchPattern,
+    Typed,
+)
+from openpyxl.packaging.relationship import (
+    Relationship,
+    RelationshipList,
+)
+from openpyxl.worksheet.header_footer import HeaderFooter, HeaderFooterItem, _HeaderFooterPart
 
 vmlns = "urn:schemas-microsoft-com:vml"
 officens = "urn:schemas-microsoft-com:office:office"
 excelns = "urn:schemas-microsoft-com:office:excel"
 
+HEADER_IMAGE_ANCHORS = ["LH", "CH", "RH", "LF", "CF", "RF"]
+
+class HeaderShape(Strict):
+    """
+    Header Shape that includes an `image`, the `anchor` or position in the header or footer, and the `relationship` for this shape.
+
+    """
+    
+    image = Typed(expected_type=Image, allow_none=False)
+    anchor = String(allow_none=False)
+    relationship = Typed(expected_type=Relationship, allow_none=False)
+    
+    def __init__(self, image, anchor, relationship):
+        self.image = image
+        self.anchor = anchor
+        self.relationship = relationship
+
 
 class HeaderShapeWriter(object):
+    """
+    Header Shape Writer for writing header shapes to the XML, uses legacyDrawingHF format.
 
+    """
+
+    shapes: List[HeaderShape] = []
+    hf: HeaderFooter
     images = []
+    rels = RelationshipList()
 
-    def add_header_image(self, image):
-        self.images.append(image)
+    def __init__(self, hf:HeaderFooter):
+        self.hf = hf
+        self._add_header_images()
+
+    def _add_header_images(self):
+        for element in self.hf.__elements__:
+            header_footer_item: HeaderFooterItem = getattr(self.hf, element)
+            header_or_footer = "H" if "Header" in element else "F"
+            self._process_header_footer_item(header_footer_item, header_or_footer)
+    
+    def _process_header_footer_item(self, header_footer_item, header_or_footer):
+        for key in ("left", "center", "right"):
+            header_footer_part: _HeaderFooterPart = getattr(header_footer_item, key)
+            header_image = header_footer_part.image
+            if header_image is not None:
+                # Add image to list of images to save in Workbook
+                if header_image not in self.images:
+                    self.images.append(header_image)
+                    header_image._id = len(self.images)
+                
+                # Check if Relationship with Target already exists in rels
+                rel = next(
+                    (check_rel for check_rel in self.rels.Relationship if check_rel.Target == header_image.path), 
+                    Relationship(type="image", Target=header_image.path)
+                )
+                if rel not in self.rels.Relationship:
+                    self.rels.append(rel)
+
+                # Determine anchor position, such as "CH" for center header
+                anchor = key[0].upper() + header_or_footer
+                if anchor not in HEADER_IMAGE_ANCHORS:
+                    raise ValueError("Invalid header image anchor position, must be one of %s" % HEADER_IMAGE_ANCHORS)
+                header_shape = HeaderShape(header_image, anchor, rel)
+                self.shapes.append(header_shape)
+
 
     def add_vml_image_shapetype(self, root):
         shape_layout = SubElement(root, "{%s}shapelayout" % officens,
@@ -61,13 +132,6 @@ class HeaderShapeWriter(object):
                     "aspectratio": "t"})
 
 
-    def add_vml_image_shape(self, root, idx, position, height, width):
-        shape = _vml_image_shape_factory(idx, "image", position, height, width)
-
-        # shape.set('id', "_x0000_s%04d" % idx)
-        root.append(shape)
-
-
     def write(self, root):
 
         if not hasattr(root, "findall"):
@@ -78,15 +142,16 @@ class HeaderShapeWriter(object):
         if shape_types is None:
             self.add_vml_image_shapetype(root)
 
-        for image in self.images:
-            rel_id = "rId%s" % image._id
-            self.add_vml_image_shape(root, rel_id, image.anchor, image.height, image.width)
+        for shape in self.shapes:
+            title = os.path.splitext(os.path.basename(shape.image.ref))[0] if shape.image.ref is not None else "image"
+            shape = _vml_image_shape_factory(shape.relationship.Id, title, shape.anchor, shape.image.height, shape.image.width)
+            root.append(shape)
 
         return tostring(root)
 
 
 def _vml_image_shape_factory(relationship, title, position, height, width):
-    style = ("position:absolute; "
+    style = ("position:absolute;"
              "margin-left:0;"
              "margin-top:0;"
              "width:{width}pt;"
@@ -96,7 +161,7 @@ def _vml_image_shape_factory(relationship, title, position, height, width):
                                          width=width)
     attrs = {
         "id": position,
-        "{%s}spid" % officens : "_x0000_s1025",
+        "{%s}spid" % officens : f"_x0000_s{ord(position[0])}{ord(position[1])}",
         "type": "#_x0000_t75",
         "style": style
     }
