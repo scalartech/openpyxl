@@ -162,25 +162,15 @@ Styles are applied directly to cells
 >>> c = ws['A1']
 >>> c.font = Font(size=12)
 
-Columns and Rows
-----------------
-
 Styles can also applied to columns and rows but note that this applies only
 to cells created (in Excel) after the file is closed. If you want to apply
-styles to entire rows and columns then you **must** apply the style to each cell
-individually. This is a restriction of the file format::
+styles to entire rows and columns then you must apply the style to each cell
+yourself. This is a restriction of the file format::
 
 >>> col = ws.column_dimensions['A']
 >>> col.font = Font(bold=True)
 >>> row = ws.row_dimensions[1]
 >>> row.font = Font(underline="single")
-
-.. note::
-
-  Column dimensions can be grouped, although this is primarily for outline
-  purposes, it can also be used for other attributes, which can be confusing
-  because only the first column of the group will be listed.
-  Use `ws.column_groups` to check.
 
 .. _styling-merged-cells:
 

@@ -115,7 +115,7 @@ class TestExcelWriter:
         assert 'xl/worksheets/sheet1.xml' in archive.namelist()
         assert ws.path in writer.manifest.filenames
 
-        rel = ws._rels.get("rId1")
+        rel = ws._rels["rId1"]
         assert dict(rel) == {'Id': 'rId1', 'Target': '/xl/drawings/drawing1.xml',
                              'Type':
                              'http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing'}

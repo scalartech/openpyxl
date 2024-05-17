@@ -48,72 +48,30 @@ def test_sequence(Relationship):
     assert diff is None, diff
 
 
-@pytest.fixture
-def RelationshipList():
+def test_read():
     from ..relationship import RelationshipList
-    return RelationshipList
-
-
-class TestRelationshipList:
-
-
-    def test_read(self, RelationshipList):
-
-        xml = """
-        <Relationships>
-          <Relationship Id="rId3"
-          Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme"
-          Target="theme/theme1.xml"/>
-          <Relationship Id="rId2"
-          Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet"
-          Target="worksheets/sheet1.xml"/>
-          <Relationship Id="rId1"
-          Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/chartsheet"
-          Target="chartsheets/sheet1.xml"/>
-          <Relationship Id="rId5"
-          Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings"
-          Target="sharedStrings.xml"/>
-          <Relationship Id="rId4"
-          Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles"
-          Target="styles.xml"/>
-        </Relationships>
-        """
-        node = fromstring(xml)
-        rels = RelationshipList.from_tree(node)
-        assert len(rels) == 5
-
-
-    def test_types(self, RelationshipList):
-
-        xml = """
-        <Relationships>
-          <Relationship Id="rId3"
-          Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme"
-          Target="theme/theme1.xml"/>
-          <Relationship Id="rId2"
-          Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet"
-          Target="worksheets/sheet1.xml"/>
-          <Relationship Id="rId1"
-          Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/chartsheet"
-          Target="chartsheets/sheet1.xml"/>
-          <Relationship Id="rId5"
-          Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings"
-          Target="sharedStrings.xml"/>
-          <Relationship Id="rId4"
-          Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles"
-          Target="styles.xml"/>
-        </Relationships>
-        """
-        node = fromstring(xml)
-        rels = RelationshipList.from_tree(node)
-        rels.get_types()
-        assert len(rels.worksheet) == 1
-
-
-@pytest.fixture
-def get_dependents():
-    from .. relationship import get_dependents
-    return get_dependents
+    xml = """
+    <Relationships>
+      <Relationship Id="rId3"
+      Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme"
+      Target="theme/theme1.xml"/>
+      <Relationship Id="rId2"
+      Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet"
+      Target="worksheets/sheet1.xml"/>
+      <Relationship Id="rId1"
+      Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/chartsheet"
+      Target="chartsheets/sheet1.xml"/>
+      <Relationship Id="rId5"
+      Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings"
+      Target="sharedStrings.xml"/>
+      <Relationship Id="rId4"
+      Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles"
+      Target="styles.xml"/>
+    </Relationships>
+    """
+    node = fromstring(xml)
+    rels = RelationshipList.from_tree(node)
+    assert len(rels) == 5
 
 
 @pytest.mark.parametrize("filename, expected",
@@ -140,7 +98,7 @@ def test_get_dependents(datadir, filename, expected):
 
     from ..relationship import get_dependents
     rels = get_dependents(archive, filename)
-    assert [r.Target for r in rels] == expected
+    assert [r.Target for r in rels.Relationship] == expected
 
 
 def test_get_external_link(datadir):
@@ -150,4 +108,4 @@ def test_get_external_link(datadir):
     from ..relationship import get_dependents
     rels = get_dependents(archive, "xl/worksheets/_rels/sheet1.xml.rels")
 
-    assert [r.Target for r in rels] == ["http://www.readthedocs.org"]
+    assert [r.Target for r in rels.Relationship] == ["http://www.readthedocs.org"]

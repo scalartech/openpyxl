@@ -8,7 +8,7 @@ New Features
 * Support Active X elements
 * Support Form Controls
 * Support for documents with volatile dependencies
- 
+
 
 Deprecations
 ------------

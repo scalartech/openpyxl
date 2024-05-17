@@ -59,7 +59,6 @@ Thanks to all those who participate in the project (in alphabetical order):
 * Koert van der Veer
 * Laurent Laporte
 * Laurent Vasseur
-* Liam Sanders
 * Maarten De Paepe
 * Magnus Schieder
 * Mark Gemmill
@@ -81,6 +80,7 @@ Thanks to all those who participate in the project (in alphabetical order):
 * Stefan Behnel
 * Stephane Bard
 * Stephen Rauch
+* Steven Hansen
 * Sven Burk
 * Ted Pollari
 * Thomas Nygards

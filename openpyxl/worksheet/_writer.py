@@ -11,9 +11,15 @@ from openpyxl.xml.functions import xmlfile
 from openpyxl.xml.constants import SHEET_MAIN_NS
 
 from openpyxl.comments.comment_sheet import CommentRecord
-from openpyxl.drawing.legacy import LegacyDrawing
-from openpyxl.packaging.relationship import Relationship, RelationshipList
 from openpyxl.styles.differential import DifferentialStyle
+
+from openpyxl.packaging.relationship import (
+    get_rels_path,
+    RelationshipList,
+    Relationship,
+)
+
+from openpyxl.drawing.legacy import LegacyDrawing
 
 from .dimensions import SheetDimension
 from .hyperlink import HyperlinkList
@@ -200,17 +206,17 @@ class WorksheetWriter:
 
 
     def write_hyperlinks(self):
+        links = HyperlinkList()
 
-        links = self.ws._hyperlinks
-
-        for link in links:
+        for link in self.ws._hyperlinks:
             if link.target:
                 rel = Relationship(type="hyperlink", TargetMode="External", Target=link.target)
                 self._rels.append(rel)
                 link.id = rel.id
+            links.hyperlink.append(link)
 
         if links:
-            self.xf.send(HyperlinkList(links).to_tree())
+            self.xf.send(links.to_tree())
 
 
     def write_print(self):
@@ -235,6 +241,12 @@ class WorksheetWriter:
         hf = self.ws.HeaderFooter
         if hf:
             self.xf.send(hf.to_tree())
+            # header and footer images require legacyDrawingHF
+            if hf.has_image():
+                rel = Relationship(type="vmlDrawing", Target="../drawings/vmlDrawing%s.vml" % self.ws._id)
+                self._rels.append(rel)
+                legacy = Related(id=rel.Id)
+                self.xf.send(legacy.to_tree("legacyDrawingHF"))
 
 
     def write_breaks(self):

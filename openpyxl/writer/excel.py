@@ -24,7 +24,7 @@ from openpyxl.xml.constants import (
 from openpyxl.drawing.spreadsheet_drawing import SpreadsheetDrawing
 from openpyxl.drawing.legacy import LegacyDrawing
 from openpyxl.drawing.image import ImageGroup
-from openpyxl.xml.functions import tostring
+from openpyxl.xml.functions import tostring, fromstring
 from openpyxl.packaging.manifest import Manifest
 from openpyxl.packaging.relationship import (
     get_rels_path,
@@ -36,6 +36,7 @@ from openpyxl.packaging.extended import ExtendedProperties
 from openpyxl.styles.stylesheet import write_stylesheet
 from openpyxl.worksheet._writer import WorksheetWriter
 from openpyxl.workbook._writer import WorkbookWriter
+from openpyxl.worksheet.header_shape_writer import HeaderShapeWriter
 from .theme import theme_xml
 
 
@@ -142,7 +143,29 @@ class ExcelWriter(object):
                     #self.archive.writestr(name, self.workbook.vba_archive.read(name))
 
 
-    def write_charts(self):
+    def _write_header_images(self, ws):
+        """
+        Write header images to vmlDrawings
+        """
+        hf = ws.HeaderFooter
+
+        header_shape_writer = HeaderShapeWriter(hf)
+
+        for image in header_shape_writer.images:
+            if image not in self._images:
+                self._images.append(image)
+
+        tree = header_shape_writer.rels.to_tree()
+
+        vml = header_shape_writer.write(None)
+        header_shape_path = 'xl/drawings/vmlDrawing%s.vml' % ws._id
+        self.archive.writestr(header_shape_path, vml)
+
+        rels_path = get_rels_path(header_shape_path)
+        self.archive.writestr(rels_path, tostring(tree))
+
+
+    def _write_charts(self):
         # delegate to object
         if len(self._charts) != len(set(self._charts)):
             raise InvalidFileException("The same chart cannot be used in more than one worksheet")
@@ -268,7 +291,8 @@ class ExcelWriter(object):
 
         if ws._drawing:
             self.write_drawing(ws._drawing)
-            for r in ws._rels:
+
+            for r in ws._rels.Relationship:
                 if "drawing" in r.Type:
                     r.Target = ws._drawing.path
 
@@ -277,7 +301,7 @@ class ExcelWriter(object):
             t.id = len(self._tables)
             t._write(self.archive)
             self.manifest.append(t)
-            ws._rels.get(t._rel_id).Target = t.path
+            ws._rels[t._rel_id].Target = t.path
 
         self.archive.write(writer.out, ws.path[1:])
         self.manifest.append(ws)
@@ -315,8 +339,12 @@ class ExcelWriter(object):
         pivot_caches = set()
 
         for idx, ws in enumerate(self.workbook.worksheets, 1):
+
             ws._id = idx
             self.write_worksheet(ws)
+
+            if ws.HeaderFooter.has_image():
+                self._write_header_images(ws)
 
             for p in ws._pivots:
                 if p.cache not in pivot_caches:
@@ -380,7 +408,7 @@ def save_workbook(workbook, filename):
     #if wb._vba and not filename.endswith(".xlsm"):
         #warn()
     archive = ZipFile(filename, 'w', ZIP_DEFLATED, allowZip64=True)
-    workbook.properties.modified = datetime.datetime.now(tz=datetime.timezone.utc).replace(tzinfo=None)
+    workbook.properties.modified = datetime.datetime.utcnow()
     writer = ExcelWriter(workbook, archive)
     writer.save()
     return True

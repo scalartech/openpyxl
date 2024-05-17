@@ -97,7 +97,7 @@ class DocumentProperties(Serialisable):
                  subject=None,
                  title=None,
                  ):
-        now = datetime.datetime.now(tz=datetime.timezone.utc).replace(tzinfo=None)
+        now = datetime.datetime.utcnow()
         self.contentStatus = contentStatus
         self.lastPrinted = lastPrinted
         self.revision = revision

@@ -17,6 +17,7 @@ from openpyxl.descriptors import (
 from openpyxl.descriptors.serialisable import Serialisable
 
 
+from openpyxl.drawing.image import Image
 from openpyxl.xml.functions import Element
 from openpyxl.utils.escape import escape, unescape
 
@@ -64,6 +65,7 @@ class _HeaderFooterPart(Strict):
     * &D or &[Date]   Inserts the current date
     * &E   Toggles double-underline
     * &F or &[File]   Inserts the workbook name
+    * &G or &[Picture]   Inserts an image
     * &I   Toggles italic
     * &N or &[Pages]   Inserts the total page count
     * &S   Toggles strikethrough
@@ -88,14 +90,15 @@ class _HeaderFooterPart(Strict):
     size = Integer(allow_none=True)
     RGB = ("^[A-Fa-f0-9]{6}$")
     color = MatchPattern(allow_none=True, pattern=RGB)
+    image = Typed(expected_type=Image, allow_none=True)
 
 
-    def __init__(self, text=None, font=None, size=None, color=None):
+    def __init__(self, text=None, font=None, size=None, color=None, image=None):
         self.text = text
         self.font = font
         self.size = size
         self.color = color
-
+        self.image = image
 
     def __str__(self):
         """
