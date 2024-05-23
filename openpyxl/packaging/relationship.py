@@ -52,6 +52,7 @@ class Relationship(Serialisable):
 class RelationshipList(Serialisable):
 
     tagname = "Relationships"
+    expected_type = Relationship
 
     Relationship = Sequence(expected_type=Relationship)
 
@@ -86,6 +87,11 @@ class RelationshipList(Serialisable):
             if r.Type == content_type:
                 yield r
 
+    def get(self, key):
+        for r in self.Relationship:
+            if r.Id == key:
+                return r
+        raise KeyError("Unknown relationship: {0}".format(key))
 
     def __getitem__(self, key):
         for r in self.Relationship:
@@ -102,6 +108,19 @@ class RelationshipList(Serialisable):
             tree.append(rel.to_tree())
 
         return tree
+
+    def get_types(self):
+        """Return a set of types contained"""
+        known_types = set()
+        for r in self:
+            simple = r.Type.split("/")[-1]
+            if simple not in known_types:
+                known_types.add(simple)
+                collection = []
+                setattr(self, simple, collection)
+            else:
+                collection = getattr(self, simple)
+            collection.append(r)
 
 
 def get_rels_path(path):

@@ -86,8 +86,8 @@ class ExcelWriter(object):
         self.write_volatile_deps()
         self.write_worksheets()
         self.write_chartsheets()
-        #self.write_images()
-        self.write_charts()
+        self._write_images()
+        self._write_charts()
 
         self.write_external_links()
 
@@ -142,6 +142,10 @@ class ExcelWriter(object):
                 #if ARC_VBA.match(name):
                     #self.archive.writestr(name, self.workbook.vba_archive.read(name))
 
+    def _write_images(self):
+        # delegate to object
+        for img in self._images:
+            self.archive.writestr(img.path[1:], img._data())
 
     def _write_header_images(self, ws):
         """

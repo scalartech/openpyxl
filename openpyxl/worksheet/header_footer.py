@@ -191,7 +191,8 @@ class HeaderFooterItem(Strict):
     def __bool__(self):
         return any([self.left, self.center, self.right])
 
-
+    def has_image(self):
+        return any([self.left.image, self.center.image, self.right.image])
 
     def to_tree(self, tagname):
         """
@@ -265,6 +266,13 @@ class HeaderFooter(Serialisable):
         if firstFooter is None:
             firstFooter = HeaderFooterItem()
         self.firstFooter = firstFooter
+
+
+    def has_image(self):
+        """
+        Check if the header or footer contains an image
+        """
+        return any(getattr(self, attr).has_image() for attr in self.__elements__)
 
 
     def __bool__(self):
