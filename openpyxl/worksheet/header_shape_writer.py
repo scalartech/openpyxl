@@ -52,15 +52,15 @@ class HeaderShapeWriter(object):
     """
 
     shapes: List[HeaderShape] = []
-    hf: HeaderFooter
-    images = []
-    rels = RelationshipList()
 
-    def __init__(self, hf:HeaderFooter):
+    def __init__(self, hf:HeaderFooter = None):
         self.hf = hf
+        self.images = []
+        self.rels = RelationshipList()
         self._add_header_images()
 
     def _add_header_images(self):
+        self.images.clear()
         for element in self.hf.__elements__:
             header_footer_item: HeaderFooterItem = getattr(self.hf, element)
             header_or_footer = "H" if "Header" in element else "F"
