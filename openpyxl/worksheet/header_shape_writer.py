@@ -52,7 +52,7 @@ class HeaderShapeWriter(object):
     """
 
     shapes: List[HeaderShape] = []
-
+    hf: HeaderFooter
     def __init__(self, hf:HeaderFooter = None):
         self.hf = hf
         self.images = []

@@ -111,12 +111,14 @@ class _HeaderFooterPart(Strict):
             fmt.append("&{0} ".format(self.size))
         if self.color:
             fmt.append("&K{0}".format(self.color))
-        return u"".join(fmt + [self.text])
+        if self.image and "&G" not in (self.text or ""):
+            fmt.append("&G")
+        if self.text:
+            fmt.append(self.text)
+        return u"".join(fmt)
 
     def __bool__(self):
-        return bool(self.text)
-
-
+        return bool(self.text or self.image)
 
     @classmethod
     def from_str(cls, text):
@@ -181,18 +183,20 @@ class HeaderFooterItem(Strict):
         txt = []
         for key, part in zip(
             self.__keys, [self.left, self.center, self.right]):
-            if part.text is not None:
+            if part.text is not None or part.image is not None:
                 txt.append(u"&{0}{1}".format(key, str(part)))
         txt = "".join(txt)
         txt = SUBS_REGEX.sub(replace, txt)
         return escape(txt)
 
 
+    def has_image(self):
+        return any([self.left.image, self.center.image, self.right.image])
+
+
     def __bool__(self):
         return any([self.left, self.center, self.right])
 
-    def has_image(self):
-        return any([self.left.image, self.center.image, self.right.image])
 
     def to_tree(self, tagname):
         """
