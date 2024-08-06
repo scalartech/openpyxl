@@ -20,7 +20,6 @@ from openpyxl.utils import (
     get_column_letter,
     range_boundaries,
     coordinate_to_tuple,
-    absolute_coordinate,
 )
 from openpyxl.cell import Cell, MergedCell
 from openpyxl.formatting.formatting import ConditionalFormattingList
@@ -150,7 +149,7 @@ class Worksheet(_WorkbookChild):
 
     @property
     def sheet_view(self):
-        return self.views.sheetView[0]
+        return self.views.active
 
 
     @property
@@ -339,8 +338,7 @@ class Worksheet(_WorkbookChild):
         """
         min_row = 1
         if self._cells:
-            rows = set(c[0] for c in self._cells)
-            min_row = min(rows)
+            min_row = min(self._cells)[0]
         return min_row
 
 
@@ -352,8 +350,7 @@ class Worksheet(_WorkbookChild):
         """
         max_row = 1
         if self._cells:
-            rows = set(c[0] for c in self._cells)
-            max_row = max(rows)
+            max_row = max(self._cells)[0]
         return max_row
 
 
@@ -365,8 +362,7 @@ class Worksheet(_WorkbookChild):
         """
         min_col = 1
         if self._cells:
-            cols = set(c[1] for c in self._cells)
-            min_col = min(cols)
+            min_col = min(c[1] for c in self._cells)
         return min_col
 
 
@@ -378,8 +374,7 @@ class Worksheet(_WorkbookChild):
         """
         max_col = 1
         if self._cells:
-            cols = set(c[1] for c in self._cells)
-            max_col = max(cols)
+            max_col = max(c[1] for c in self._cells)
         return max_col
 
 
@@ -532,6 +527,14 @@ class Worksheet(_WorkbookChild):
     def columns(self):
         """Produces all cells in the worksheet, by column  (see :func:`iter_cols`)"""
         return self.iter_cols()
+
+
+    @property
+    def column_groups(self):
+        """
+        Return a list of column ranges where more than one column
+        """
+        return [cd.range for cd in self.column_dimensions.values() if cd.min and cd.max > cd.min]
 
 
     def set_printer_settings(self, paper_size, orientation):

@@ -74,30 +74,28 @@ class ReadOnlyWorksheet(object):
 
         counter = min_row
         idx = 1
-        src = self._get_source()
-        parser = WorkSheetParser(src,
-                                 self._shared_strings,
-                                 data_only=self.parent.data_only,
-                                 epoch=self.parent.epoch,
-                                 date_formats=self.parent._date_formats,
-                                 timedelta_formats=self.parent._timedelta_formats)
+        with self._get_source() as src:
+            parser = WorkSheetParser(src,
+                                     self._shared_strings,
+                                     data_only=self.parent.data_only,
+                                     epoch=self.parent.epoch,
+                                     date_formats=self.parent._date_formats,
+                                     timedelta_formats=self.parent._timedelta_formats)
 
-        for idx, row in parser.parse():
-            if max_row is not None and idx > max_row:
-                break
+            for idx, row in parser.parse():
+                if max_row is not None and idx > max_row:
+                    break
 
-            # some rows are missing
-            for _ in range(counter, idx):
-                counter += 1
-                yield empty_row
+                # some rows are missing
+                for _ in range(counter, idx):
+                    counter += 1
+                    yield empty_row
 
-            # return cells from a row
-            if counter <= idx:
-                row = self._get_row(row, min_col, max_col, values_only)
-                counter += 1
-                yield row
-
-        src.close() # make sure source is always closed
+                # return cells from a row
+                if counter <= idx:
+                    row = self._get_row(row, min_col, max_col, values_only)
+                    counter += 1
+                    yield row
 
         if max_row is not None and max_row < idx:
             for _ in range(counter, max_row+1):

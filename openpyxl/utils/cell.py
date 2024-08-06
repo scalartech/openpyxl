@@ -73,37 +73,67 @@ def absolute_coordinate(coord_string):
     return fmt.format(**d)
 
 
-def _list_of_columns():
-    """Generate a list of all possible column names"""
-    prods = chain(
-        # A->Z
-        ascii_uppercase,
-        # AA->ZZ
-        product(ascii_uppercase, repeat=2),
-        # AAA->ZZZ
-        product(ascii_uppercase, repeat=3)
-    )
-    return ["".join(col) for col in prods]
-
-_COLS = _list_of_columns()
-
+__decimal_to_alpha = [""] + list(ascii_uppercase)
 
 @lru_cache(maxsize=None)
-def get_column_letter(idx):
-    """Convert a column index into a column letter
-    (3 -> 'C')
+def get_column_letter(col_idx):
     """
-    if not 1 <= idx <= 18278:
-        raise ValueError(f"Invalid column index {idx}. Indices must be between 1 and 18,278")
-    return _COLS[idx-1]
+    Convert decimal column position to its ASCII (base 26) form.
 
+    Because column indices are 1-based, strides are actually pow(26, n) + 26
+    Hence, a correction is applied between pow(26, n) and pow(26, 2) + 26 to
+    prevent and additional column letter being prepended
+
+    "A" == 1 == pow(26, 0)
+    "Z" == 26 == pow(26, 0) + 26 // decimal equivalent 10
+    "AA" == 27 == pow(26, 1) + 1
+    "ZZ" == 702 == pow(26, 2) + 26 // decimal equivalent 100
+    """
+
+    if not 1 <= col_idx <= 18278:
+        raise ValueError("Invalid column index {0}".format(col_idx))
+
+    result = []
+
+    if col_idx < 26:
+        return __decimal_to_alpha[col_idx]
+
+    while col_idx:
+        col_idx, remainder = divmod(col_idx, 26)
+        result.insert(0, __decimal_to_alpha[remainder])
+        if not remainder:
+            col_idx -= 1
+            result.insert(0, "Z")
+
+    return "".join(result)
+
+
+__alpha_to_decimal = {letter:pos for pos, letter in enumerate(ascii_uppercase, 1)}
+__powers = (1, 26, 676)
 
 @lru_cache(maxsize=None)
 def column_index_from_string(col):
-    try:
-        return _COLS.index(col.upper()) + 1
-    except ValueError:
-        raise ValueError(f"{col} is not a valid column name. Column names are from A to ZZZ")
+    """
+    Convert ASCII column name (base 26) to decimal with 1-based index
+
+    Characters represent descending multiples of powers of 26
+
+    "AFZ" == 26 * pow(26, 0) + 6 * pow(26, 1) + 1 * pow(26, 2)
+    """
+    error_msg = f"'{col}' is not a valid column name. Column names are from A to ZZZ"
+    if len(col) > 3:
+        raise ValueError(error_msg)
+    idx = 0
+    col = reversed(col.upper())
+    for letter, power in zip(col, __powers):
+        try:
+            pos = __alpha_to_decimal[letter]
+        except KeyError:
+            raise ValueError(error_msg)
+        idx += pos * power
+    if not 0 < idx < 18279:
+        raise ValueError(error_msg)
+    return idx
 
 
 def range_boundaries(range_string):

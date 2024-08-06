@@ -255,6 +255,17 @@ class TestExcelReader:
         assert len(reader.wb._volatile_deps.volType) == 1
 
 
+    def test_read_connections(self, datadir):
+        datadir.chdir()
+        reader = ExcelReader("sample_with_volatile_deps_and_connection.xlsx")
+        reader.read_manifest()
+        reader.read_workbook()
+        reader.read_connections()
+        # Test Parse
+        assert reader.wb._connections is not None
+        assert len(reader.wb._connections.connection) == 3
+
+
 @pytest.fixture
 def WorksheetProcessor():
     from .. excel import WorksheetProcessor

@@ -15,6 +15,7 @@ from openpyxl.xml.constants import (
     ARC_CORE,
     ARC_CUSTOM,
     ARC_VOLATILE_DEPENDENCIES,
+    ARC_CONNECTIONS,
     CPROPS_TYPE,
     ARC_THEME,
     ARC_STYLE,
@@ -24,7 +25,7 @@ from openpyxl.xml.constants import (
 from openpyxl.drawing.spreadsheet_drawing import SpreadsheetDrawing
 from openpyxl.drawing.legacy import LegacyDrawing
 from openpyxl.drawing.image import ImageGroup
-from openpyxl.xml.functions import tostring, fromstring
+from openpyxl.xml.functions import tostring
 from openpyxl.packaging.manifest import Manifest
 from openpyxl.packaging.relationship import (
     get_rels_path,
@@ -36,7 +37,7 @@ from openpyxl.packaging.extended import ExtendedProperties
 from openpyxl.styles.stylesheet import write_stylesheet
 from openpyxl.worksheet._writer import WorksheetWriter
 from openpyxl.workbook._writer import WorkbookWriter
-from openpyxl.worksheet.header_shape_writer import HeaderShapeWriter
+from openpyxl.worksheet.header_shape_writer import HeaderFooterShapeWriter
 from .theme import theme_xml
 
 
@@ -84,10 +85,11 @@ class ExcelWriter(object):
             self.manifest.append(custom_override)
 
         self.write_volatile_deps()
+        self.write_connections()
         self.write_worksheets()
         self.write_chartsheets()
         self._write_images()
-        self._write_charts()
+        self.write_charts()
 
         self.write_external_links()
 
@@ -145,31 +147,32 @@ class ExcelWriter(object):
     def _write_images(self):
         # delegate to object
         for img in self._images:
-            self.archive.writestr(img.path[1:], img._data())
+            if isinstance(img.ref, str):
+                self.archive.writestr(img.path[1:], img._data())
 
-    def _write_header_images(self, ws):
+    def _process_header_footer_images(self, ws):
         """
         Write header images to vmlDrawings
         """
         hf = ws.HeaderFooter
 
-        header_shape_writer = HeaderShapeWriter(hf)
+        header_footer_shape_writer = HeaderFooterShapeWriter(hf)
 
-        for image in header_shape_writer.images:
+        for image in header_footer_shape_writer.images:
             if image not in self._images:
                 self._images.append(image)
 
-        tree = header_shape_writer.rels.to_tree()
+        tree = header_footer_shape_writer.rels.to_tree()
 
-        vml = header_shape_writer.write(None)
-        header_shape_path = 'xl/drawings/vmlDrawing%s.vml' % ws._id
-        self.archive.writestr(header_shape_path, vml)
+        vml = header_footer_shape_writer.write(None)
+        header_footer_shape_path = 'xl/drawings/vmlDrawing%s.vml' % ws._id
+        self.archive.writestr(header_footer_shape_path, vml)
 
-        rels_path = get_rels_path(header_shape_path)
+        rels_path = get_rels_path(header_footer_shape_path)
         self.archive.writestr(rels_path, tostring(tree))
 
 
-    def _write_charts(self):
+    def write_charts(self):
         # delegate to object
         if len(self._charts) != len(set(self._charts)):
             raise InvalidFileException("The same chart cannot be used in more than one worksheet")
@@ -295,8 +298,7 @@ class ExcelWriter(object):
 
         if ws._drawing:
             self.write_drawing(ws._drawing)
-
-            for r in ws._rels.Relationship:
+            for r in ws._rels:
                 if "drawing" in r.Type:
                     r.Target = ws._drawing.path
 
@@ -305,7 +307,7 @@ class ExcelWriter(object):
             t.id = len(self._tables)
             t._write(self.archive)
             self.manifest.append(t)
-            ws._rels[t._rel_id].Target = t.path
+            ws._rels.get(t._rel_id).Target = t.path
 
         self.archive.write(writer.out, ws.path[1:])
         self.manifest.append(ws)
@@ -343,12 +345,11 @@ class ExcelWriter(object):
         pivot_caches = set()
 
         for idx, ws in enumerate(self.workbook.worksheets, 1):
-
             ws._id = idx
             self.write_worksheet(ws)
 
             if ws.HeaderFooter.has_image():
-                self._write_header_images(ws)
+                self._process_header_footer_images(ws)
 
             for p in ws._pivots:
                 if p.cache not in pivot_caches:
@@ -391,6 +392,13 @@ class ExcelWriter(object):
             self.manifest.append(self.workbook._volatile_deps)
 
 
+    def write_connections(self):
+        if self.workbook._connections:
+            tree = self.workbook._connections.to_tree()
+            self.archive.writestr(ARC_CONNECTIONS, tostring(tree))
+            self.manifest.append(self.workbook._connections)
+
+
     def save(self):
         """Write data into the archive."""
         self.write_data()
@@ -412,7 +420,7 @@ def save_workbook(workbook, filename):
     #if wb._vba and not filename.endswith(".xlsm"):
         #warn()
     archive = ZipFile(filename, 'w', ZIP_DEFLATED, allowZip64=True)
-    workbook.properties.modified = datetime.datetime.utcnow()
+    workbook.properties.modified = datetime.datetime.now(tz=datetime.timezone.utc).replace(tzinfo=None)
     writer = ExcelWriter(workbook, archive)
     writer.save()
     return True

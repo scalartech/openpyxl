@@ -11,15 +11,9 @@ from openpyxl.xml.functions import xmlfile
 from openpyxl.xml.constants import SHEET_MAIN_NS
 
 from openpyxl.comments.comment_sheet import CommentRecord
-from openpyxl.styles.differential import DifferentialStyle
-
-from openpyxl.packaging.relationship import (
-    get_rels_path,
-    RelationshipList,
-    Relationship,
-)
-
 from openpyxl.drawing.legacy import LegacyDrawing
+from openpyxl.packaging.relationship import Relationship, RelationshipList
+from openpyxl.styles.differential import DifferentialStyle
 
 from .dimensions import SheetDimension
 from .hyperlink import HyperlinkList
@@ -206,17 +200,17 @@ class WorksheetWriter:
 
 
     def write_hyperlinks(self):
-        links = HyperlinkList()
 
-        for link in self.ws._hyperlinks:
+        links = self.ws._hyperlinks
+
+        for link in links:
             if link.target:
                 rel = Relationship(type="hyperlink", TargetMode="External", Target=link.target)
                 self._rels.append(rel)
                 link.id = rel.id
-            links.hyperlink.append(link)
 
         if links:
-            self.xf.send(links.to_tree())
+            self.xf.send(HyperlinkList(links).to_tree())
 
 
     def write_print(self):

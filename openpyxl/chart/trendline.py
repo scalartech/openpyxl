@@ -68,8 +68,8 @@ class Trendline(Serialisable):
     trendlineLbl = Typed(expected_type=TrendlineLabel, allow_none=True)
     extLst = Typed(expected_type=ExtensionList, allow_none=True)
 
-    __elements__ = ('name', 'spPr', 'trendlineType', 'order', 'period',
-                    'forward', 'backward', 'intercept', 'dispRSqr', 'dispEq', 'trendlineLbl')
+    __elements__ = ('spPr', 'trendlineType', 'order', 'period', 'forward',
+                    'backward', 'intercept', 'dispRSqr', 'dispEq', 'trendlineLbl')
 
     def __init__(self,
                  name=None,

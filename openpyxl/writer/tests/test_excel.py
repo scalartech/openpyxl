@@ -115,7 +115,7 @@ class TestExcelWriter:
         assert 'xl/worksheets/sheet1.xml' in archive.namelist()
         assert ws.path in writer.manifest.filenames
 
-        rel = ws._rels["rId1"]
+        rel = ws._rels.get("rId1")
         assert dict(rel) == {'Id': 'rId1', 'Target': '/xl/drawings/drawing1.xml',
                              'Type':
                              'http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing'}
@@ -344,6 +344,21 @@ class TestExcelWriter:
         writer.write_volatile_deps()
 
         assert writer.archive.namelist() == ["xl/volatileDependencies.xml"]
+
+
+    def test_connections(self, ExcelWriter, archive):
+        from openpyxl.connection.connections import Connections, Connection
+        archive = ZipFile(BytesIO(), "w")
+        wb = Workbook()
+        wb._connections = Connections(
+            connection=[
+                Connection(id=1, refreshedVersion=8)
+                ]
+            )
+        writer = ExcelWriter(wb, archive)
+        writer.write_connections()
+
+        assert writer.archive.namelist() == ["xl/connections.xml"]
 
 
 def test_write_empty_workbook(tmpdir):

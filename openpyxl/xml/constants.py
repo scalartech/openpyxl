@@ -35,6 +35,7 @@ ARC_THEME = PACKAGE_THEME + '/theme1.xml'
 ARC_SHARED_STRINGS = PACKAGE_XL + '/sharedStrings.xml'
 ARC_CUSTOM_UI = 'customUI/customUI.xml'
 ARC_VOLATILE_DEPENDENCIES = PACKAGE_XL + '/volatileDependencies.xml'
+ARC_CONNECTIONS = PACKAGE_XL + '/connections.xml'
 
 ## namespaces
 # XML

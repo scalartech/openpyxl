@@ -91,14 +91,17 @@ class _HeaderFooterPart(Strict):
     RGB = ("^[A-Fa-f0-9]{6}$")
     color = MatchPattern(allow_none=True, pattern=RGB)
     image = Typed(expected_type=Image, allow_none=True)
+    position = String(allow_none=True)
 
 
-    def __init__(self, text=None, font=None, size=None, color=None, image=None):
+
+    def __init__(self, text=None, font=None, size=None, color=None, image=None, position=None):
         self.text = text
         self.font = font
         self.size = size
         self.color = color
         self.image = image
+        self.position = position
 
     def __str__(self):
         """
@@ -148,15 +151,15 @@ class HeaderFooterItem(Strict):
     __keys = ('L', 'C', 'R')
 
 
-    def __init__(self, left=None, right=None, center=None):
+    def __init__(self, left=None, right=None, center=None, header_or_footer="HF"): #header_footer = 'H' or 'F'
         if left is None:
-            left = _HeaderFooterPart()
+            left = _HeaderFooterPart(position="L"+header_or_footer)
         self.left = left
         if center is None:
-            center = _HeaderFooterPart()
+            center = _HeaderFooterPart(position="C"+header_or_footer)
         self.center = center
         if right is None:
-            right = _HeaderFooterPart()
+            right = _HeaderFooterPart(position="R"+header_or_footer)
         self.right = right
 
 
@@ -196,6 +199,7 @@ class HeaderFooterItem(Strict):
 
     def __bool__(self):
         return any([self.left, self.center, self.right])
+
 
 
     def to_tree(self, tagname):
@@ -253,22 +257,22 @@ class HeaderFooter(Serialisable):
         self.scaleWithDoc = scaleWithDoc
         self.alignWithMargins = alignWithMargins
         if oddHeader is None:
-            oddHeader = HeaderFooterItem()
+            oddHeader = HeaderFooterItem(header_or_footer="H")
         self.oddHeader = oddHeader
         if oddFooter is None:
-            oddFooter = HeaderFooterItem()
+            oddFooter = HeaderFooterItem(header_or_footer="F")
         self.oddFooter = oddFooter
         if evenHeader is None:
-            evenHeader = HeaderFooterItem()
+            evenHeader = HeaderFooterItem(header_or_footer="H")
         self.evenHeader = evenHeader
         if evenFooter is None:
-            evenFooter = HeaderFooterItem()
+            evenFooter = HeaderFooterItem(header_or_footer="F")
         self.evenFooter = evenFooter
         if firstHeader is None:
-            firstHeader = HeaderFooterItem()
+            firstHeader = HeaderFooterItem(header_or_footer="H")
         self.firstHeader = firstHeader
         if firstFooter is None:
-            firstFooter = HeaderFooterItem()
+            firstFooter = HeaderFooterItem(header_or_footer="F")
         self.firstFooter = firstFooter
 
 

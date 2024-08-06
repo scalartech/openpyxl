@@ -29,6 +29,7 @@ from openpyxl.xml.constants import (
     ARC_WORKBOOK,
     ARC_THEME,
     ARC_VOLATILE_DEPENDENCIES,
+    ARC_CONNECTIONS,
     SHARED_STRINGS,
     XLTM,
     XLTX,
@@ -65,7 +66,7 @@ from openpyxl.drawing.legacy import LegacyDrawing
 from openpyxl.drawing.image import Image
 
 from openpyxl.volatile.volatile_deps import VolTypesList
-
+from openpyxl.connection.connections import Connections
 from openpyxl.xml.functions import fromstring
 
 from .drawings import find_images
@@ -266,6 +267,13 @@ class ExcelReader:
             self.wb._volatile_deps = VolTypesList.from_tree(root)
 
 
+    def read_connections(self):
+        if ARC_CONNECTIONS in self.valid_files:
+            src = self.archive.read(ARC_CONNECTIONS)
+            root = fromstring(src)
+            self.wb._connections = Connections.from_tree(root)
+
+
     def read(self):
         action = "read manifest"
         try:
@@ -288,6 +296,8 @@ class ExcelReader:
             self.parser.assign_names()
             action = "read volatile deps"
             self.read_volatile_deps()
+            action = "read connections"
+            self.read_connections()
             if not self.read_only:
                 self.archive.close()
         except ValueError as e:

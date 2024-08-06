@@ -454,6 +454,15 @@ class TestWorksheet:
         assert len(tbl_ws._tables) == 1
 
 
+    def test_column_groups(self, Worksheet):
+        ws = Worksheet(Workbook())
+        ws.column_dimensions["A"]
+        ws.column_dimensions["F"]
+        ws.column_dimensions.group("F", "K")
+
+        assert ws.column_groups == ["F:K"]
+
+
 def test_freeze_panes_horiz(Worksheet):
     ws = Worksheet(Workbook())
     ws.freeze_panes = 'A4'
