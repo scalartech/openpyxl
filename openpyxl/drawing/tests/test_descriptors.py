@@ -1,4 +1,4 @@
-# Copyright (c) 2010-2023 openpyxl
+# Copyright (c) 2010-2024 openpyxl
 
 
 def test_color_descriptor():

@@ -222,7 +222,7 @@ You can specify the number format for cells, or for some instances (ie datetime)
 >>>
 >>> ws['A1'].number_format
 'yyyy-mm-dd h:mm:ss'
->>> 
+>>>
 >>> ws["A2"] = 0.123456
 >>> ws["A2"].number_format = "0.00" # Display to 2dp
 

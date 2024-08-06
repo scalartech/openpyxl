@@ -354,7 +354,6 @@ You can use the :func:`openpyxl.load_workbook` to open an existing workbook::
     >>> print(sheet_ranges['D18'].value)
     3
 
-
 .. note ::
 
     There are several flags that can be used in load_workbook.
@@ -371,6 +370,7 @@ You can use the :func:`openpyxl.load_workbook` to open an existing workbook::
     openpyxl does currently not read all possible items in an Excel file so
     shapes will be lost from existing files if they are opened and saved with
     the same name.
+
 
 Errors loading workbooks
 ------------------------

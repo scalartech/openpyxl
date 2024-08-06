@@ -1,4 +1,4 @@
-# Copyright (c) 2010-2023 openpyxl
+# Copyright (c) 2010-2024 openpyxl
 
 import pytest
 
@@ -102,12 +102,6 @@ class TestHeaderFooterItem:
         hf.center.text ="no"
         hf.right.text = "maybe"
         assert str(hf) == "&Lyes&Cno&Rmaybe"
-
-
-    def test_picture_to_g(self, HeaderFooterItem):
-        hf = HeaderFooterItem()
-        hf.center.text ="&[Picture]"
-        assert str(hf) == "&C&G"
 
 
     def test_read(self, HeaderFooterItem):

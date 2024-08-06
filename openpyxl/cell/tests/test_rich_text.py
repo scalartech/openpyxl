@@ -1,4 +1,4 @@
-# Copyright (c) 2010-2023 openpyxl
+# Copyright (c) 2010-2024 openpyxl
 
 from openpyxl.cell.rich_text import TextBlock, CellRichText
 from openpyxl.cell.text import InlineFont

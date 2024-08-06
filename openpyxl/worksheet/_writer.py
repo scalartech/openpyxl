@@ -1,4 +1,4 @@
-# Copyright (c) 2010-2023 openpyxl
+# Copyright (c) 2010-2024 openpyxl
 
 import atexit
 from collections import defaultdict
@@ -11,14 +11,9 @@ from openpyxl.xml.functions import xmlfile
 from openpyxl.xml.constants import SHEET_MAIN_NS
 
 from openpyxl.comments.comment_sheet import CommentRecord
+from openpyxl.drawing.legacy import LegacyDrawing
 from openpyxl.packaging.relationship import Relationship, RelationshipList
 from openpyxl.styles.differential import DifferentialStyle
-
-from openpyxl.packaging.relationship import (
-    get_rels_path,
-    RelationshipList,
-    Relationship,
-)
 
 from .dimensions import SheetDimension
 from .hyperlink import HyperlinkList
@@ -54,6 +49,8 @@ class WorksheetWriter:
         self.ws = ws
         self.ws._hyperlinks = []
         self.ws._comments = []
+        self.controls = []
+        self.control_images = []
         if out is None:
             out = create_temporary_file()
         self.out = out
@@ -203,17 +200,17 @@ class WorksheetWriter:
 
 
     def write_hyperlinks(self):
-        links = HyperlinkList()
 
-        for link in self.ws._hyperlinks:
+        links = self.ws._hyperlinks
+
+        for link in links:
             if link.target:
                 rel = Relationship(type="hyperlink", TargetMode="External", Target=link.target)
                 self._rels.append(rel)
                 link.id = rel.id
-            links.hyperlink.append(link)
 
         if links:
-            self.xf.send(links.to_tree())
+            self.xf.send(HyperlinkList(links).to_tree())
 
 
     def write_print(self):
@@ -254,7 +251,7 @@ class WorksheetWriter:
 
 
     def write_drawings(self):
-        if self.ws._charts or self.ws._images:
+        if self.ws._charts or self.ws._images or self.ws._shapes:
             rel = Relationship(type="drawing", Target="")
             self._rels.append(rel)
             drawing = Related()
@@ -267,9 +264,42 @@ class WorksheetWriter:
         Comments & VBA controls use VML and require an additional element
         that is no longer in the specification.
         """
-        if (self.ws.legacy_drawing is not None or self.ws._comments):
-            legacy = Related(id="anysvml")
-            self.xf.send(legacy.to_tree("legacyDrawing"))
+        if not self.ws.legacy_drawing and not self.ws._comments:
+            return
+        if not self.ws.legacy_drawing:
+            self.ws.legacy_drawing = LegacyDrawing(vml=None)
+
+        rel = Relationship(type="vmlDrawing", Target="")
+        self._rels.append(rel)
+        legacy = Related(id=rel.id)
+        self.ws.legacy_drawing._rel_id = rel.id
+        self.xf.send(legacy.to_tree("legacyDrawing"))
+
+
+    def write_controls(self):
+        controls = self.ws.controls
+        if not controls:
+            return
+
+        targets = []
+        for ctrl in controls.control:
+            shape = ctrl.shape # ActiveX or CtrlProp
+            self.controls.append(shape)
+            rel = Relationship(Type=shape.rel_type, Target="")
+            self._rels.append(rel)
+            ctrl.id = rel.id
+            shape._rel_id = rel.id
+            embedded = getattr(ctrl.controlPr, "image", None)
+
+            if embedded:
+                embedded.id = None
+                if embedded.Target not in targets:
+                    self.control_images.append(embedded)
+                    self._rels.append(embedded)
+                    targets.append(embedded.Target)
+                ctrl.controlPr.id = embedded.id
+
+        self.xf.send(controls.to_tree())
 
 
     def write_tables(self):
@@ -360,6 +390,7 @@ class WorksheetWriter:
         self.write_breaks()
         self.write_drawings()
         self.write_legacy()
+        self.write_controls()
         self.write_tables()
 
 

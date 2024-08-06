@@ -1,4 +1,4 @@
-# Copyright (c) 2010-2023 openpyxl
+# Copyright (c) 2010-2024 openpyxl
 
 """Reader for a single worksheet."""
 from copy import copy
@@ -30,9 +30,10 @@ from openpyxl.utils.datetime import from_excel, from_ISO8601, WINDOWS_EPOCH
 from openpyxl.descriptors.excel import ExtensionList
 from openpyxl.cell.rich_text import CellRichText
 
+from .controls import ControlList
 from .formula import DataTableFormula, ArrayFormula
 from .filters import AutoFilter
-from .header_footer import HeaderFooter
+from .header_footer import HeaderFooter, HeaderFooterItem
 from .hyperlink import HyperlinkList
 from .merge import MergeCells
 from .page import PageMargins, PrintOptions, PrintPageSetup
@@ -75,6 +76,7 @@ SCENARIOS_TAG = '{%s}scenarios' % SHEET_MAIN_NS
 DATA_TAG = '{%s}sheetData' % SHEET_MAIN_NS
 DIMENSION_TAG = '{%s}dimension' % SHEET_MAIN_NS
 CUSTOM_VIEWS_TAG = '{%s}customSheetViews' % SHEET_MAIN_NS
+CONTROLS_TAG = "{%s}controls" % SHEET_MAIN_NS
 
 
 def _cast_number(value):
@@ -119,6 +121,7 @@ class WorkSheetParser(object):
         self.merged_cells = None
         self.row_breaks = RowBreak()
         self.col_breaks = ColBreak()
+        self.controls = None
         self.rich_text = rich_text
 
 
@@ -148,7 +151,7 @@ class WorkSheetParser(object):
             TABLE_TAG: ('tables', TablePartList),
             HYPERLINK_TAG: ('hyperlinks', HyperlinkList),
             MERGE_TAG: ('merged_cells', MergeCells),
-
+            CONTROLS_TAG: ("controls", ControlList),
         }
 
         it = iterparse(self.source) # add a finaliser to close the source when this becomes possible
@@ -387,7 +390,7 @@ class WorksheetReader(object):
 
     def bind_tables(self):
         for t in self.parser.tables.tablePart:
-            rel = self.ws._rels[t.id]
+            rel = self.ws._rels.get(t.id)
             self.tables.append(rel.Target)
 
 
@@ -408,7 +411,7 @@ class WorksheetReader(object):
     def bind_hyperlinks(self):
         for link in self.parser.hyperlinks.hyperlink:
             if link.id:
-                rel = self.ws._rels[link.id]
+                rel = self.ws._rels.get(link.id)
                 link.target = rel.Target
             if ":" in link.ref:
                 # range of cells
@@ -454,12 +457,41 @@ class WorksheetReader(object):
                   'HeaderFooter', 'auto_filter', 'data_validations',
                   'sheet_properties', 'views', 'sheet_format',
                   'row_breaks', 'col_breaks', 'scenarios', 'legacy_drawing',
-                  'protection',
+                  'protection', "controls"
                   ):
             v = getattr(self.parser, k, None)
-            if v is not None:
-                setattr(self.ws, k, v)
 
+            if v is not None:
+                if k == 'HeaderFooter':
+                    self.copy_header_footer(v)
+                else:
+                    setattr(self.ws, k, v)
+
+
+    def copy_attributes(source, destination, ignore_keys=None):
+        if ignore_keys is None:
+            ignore_keys = []
+
+        for key, value in source.__dict__.items():
+            if key not in ignore_keys:
+                setattr(destination, key, value)
+
+
+    def copy_header_footer(self, header_footer_parser):
+        header_footer_ws = getattr(self.ws, 'HeaderFooter')
+        margins = ["oddHeader", "oddFooter"]
+        for margin in margins:
+            margin_parser = getattr(header_footer_parser, margin, None)
+            margin_ws = getattr(header_footer_ws, margin, None)
+            if isinstance(margin_parser, HeaderFooterItem) and isinstance(margin_ws, HeaderFooterItem):
+                for position in ["left", "center", "right"]:
+                    parse_values = getattr(margin_parser, position, None)
+                    ws_values = getattr(margin_ws, position, None)
+                    if parse_values and ws_values:
+                        self.copy_attributes(parse_values, ws_values, ignore_keys=['position'])
+                        setattr(margin_ws, position, ws_values)
+            setattr(header_footer_ws, margin, margin_ws)
+        setattr(self.ws, 'HeaderFooter', header_footer_ws)
 
     def bind_all(self):
         self.bind_cells()

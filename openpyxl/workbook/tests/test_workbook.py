@@ -1,4 +1,4 @@
-# Copyright (c) 2010-2023 openpyxl
+# Copyright (c) 2010-2024 openpyxl
 
 import datetime
 
@@ -43,7 +43,7 @@ class TestWorkbook:
                              )
     def test_template(self, has_vba, as_template, content_type, Workbook):
         wb = Workbook()
-        wb.vba_archive = has_vba
+        wb._vba = has_vba
         wb.template = as_template
         assert wb.mime_type == content_type
 

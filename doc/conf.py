@@ -304,6 +304,7 @@ def run_apidoc(_):
         '../openpyxl/tests',
         '../openpyxl/utils/tests',
         '../openpyxl/utils/formulas.py',
+        '../openpyxl/volatile/tests',
         '../openpyxl/workbook/tests',
         '../openpyxl/workbook/external_link/tests',
         '../openpyxl/writer/tests',

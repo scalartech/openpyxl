@@ -1,4 +1,4 @@
-# Copyright (c) 2010-2023 openpyxl
+# Copyright (c) 2010-2024 openpyxl
 
 """Write the workbook global settings to the archive."""
 
@@ -162,10 +162,20 @@ class WorkbookWriter:
         theme =  Relationship(type='theme', Target='theme/theme1.xml')
         self.rels.append(theme)
 
-        if self.wb.vba_archive:
+        if self.wb._vba:
             vba =  Relationship(type='', Target='vbaProject.bin')
             vba.Type ='http://schemas.microsoft.com/office/2006/relationships/vbaProject'
             self.rels.append(vba)
+
+        if self.wb._volatile_deps:
+            vol_deps = Relationship(type="", Target="volatileDependencies.xml")
+            vol_deps.Type = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/volatileDependencies"
+            self.rels.append(vol_deps)
+
+        if self.wb._connections:
+            connections = Relationship(type="", Target="connections.xml")
+            connections.Type = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/connections"
+            self.rels.append(connections)
 
         return tostring(self.rels.to_tree())
 

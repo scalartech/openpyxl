@@ -134,6 +134,7 @@ There are several ways to contribute, even if you can't code (or can't code well
     defined_names
     workbook_custom_doc_props
     protection
+    volatile_dependencies
 
 .. toctree::
     :maxdepth: 1

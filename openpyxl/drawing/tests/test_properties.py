@@ -1,4 +1,4 @@
-# Copyright (c) 2010-2023 openpyxl
+# Copyright (c) 2010-2024 openpyxl
 
 import pytest
 
@@ -166,3 +166,30 @@ class TestGroupShapeProperties:
         node = fromstring(src)
         fut = GroupShapeProperties.from_tree(node)
         assert fut == GroupShapeProperties()
+
+
+@pytest.fixture
+def NonVisualDrawingShapeProps():
+    from ..properties import NonVisualDrawingShapeProps
+    return NonVisualDrawingShapeProps
+
+
+class TestNonVisualDrawingShapeProps:
+
+    def test_ctor(self, NonVisualDrawingShapeProps):
+        props = NonVisualDrawingShapeProps(txBox=True)
+        xml = tostring(props.to_tree())
+        expected = """
+        <cNvSpPr txBox="1" />
+        """
+        diff = compare_xml(xml, expected)
+        assert diff is None, diff
+
+
+    def test_from_xml(self, NonVisualDrawingShapeProps):
+        src = """
+        <cNvSpPr txBox="1" />
+        """
+        node = fromstring(src)
+        props = NonVisualDrawingShapeProps.from_tree(node)
+        assert props == NonVisualDrawingShapeProps(txBox=True)

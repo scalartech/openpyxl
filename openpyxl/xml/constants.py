@@ -1,4 +1,4 @@
-# Copyright (c) 2010-2023 openpyxl
+# Copyright (c) 2010-2024 openpyxl
 
 
 """Constants for fixed paths in a file and xml namespace urls."""
@@ -34,6 +34,8 @@ ARC_STYLE = PACKAGE_XL + '/styles.xml'
 ARC_THEME = PACKAGE_THEME + '/theme1.xml'
 ARC_SHARED_STRINGS = PACKAGE_XL + '/sharedStrings.xml'
 ARC_CUSTOM_UI = 'customUI/customUI.xml'
+ARC_VOLATILE_DEPENDENCIES = PACKAGE_XL + '/volatileDependencies.xml'
+ARC_CONNECTIONS = PACKAGE_XL + '/connections.xml'
 
 ## namespaces
 # XML
@@ -46,7 +48,7 @@ DCTERMS_PREFIX = 'dcterms'
 # Document
 DOC_NS = "http://schemas.openxmlformats.org/officeDocument/2006/"
 REL_NS = DOC_NS + "relationships"
-COMMENTS_NS = REL_NS + "/comments"
+COMMENTS_REL = REL_NS + "/comments"
 IMAGE_NS = REL_NS + "/image"
 VML_NS =  REL_NS + "/vmlDrawing"
 VTYPES_NS = DOC_NS + 'docPropsVTypes'
@@ -74,7 +76,10 @@ SHEET_DRAWING_NS = "http://schemas.openxmlformats.org/drawingml/2006/spreadsheet
 CHART_DRAWING_NS = "http://schemas.openxmlformats.org/drawingml/2006/chartDrawing"
 
 CUSTOMUI_NS = 'http://schemas.microsoft.com/office/2006/relationships/ui/extensibility'
+MARKUP_NS = "http://schemas.openxmlformats.org/markup-compatibility/2006"
+ACTIVEX_NS = "http://schemas.microsoft.com/office/2006/activeX"
 
+XL_2009 = "http://schemas.microsoft.com/office/spreadsheetml/2009/9/main"
 
 NAMESPACES = {
     'cp': COREPROPS_NS,
@@ -86,6 +91,8 @@ NAMESPACES = {
     'xml': XML_NS,
     'main': SHEET_MAIN_NS,
     'cust': CUSTPROPS_NS,
+    "mc": MARKUP_NS,
+    "ax": ACTIVEX_NS
 }
 
 ## Mime types
