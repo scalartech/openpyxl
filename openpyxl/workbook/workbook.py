@@ -56,10 +56,12 @@ class Workbook(object):
     template = False
     path = "/xl/workbook.xml"
 
-    def __init__(self,
-                 write_only=False,
-                 iso_dates=True,
-                 ):
+    def __init__(
+        self,
+        write_only=False,
+        iso_dates=True,
+        repeat_header_and_footer=False
+    ):
         self._sheets = []
         self._pivots = []
         self._active_sheet_index = 0
@@ -81,6 +83,7 @@ class Workbook(object):
         self.epoch = WINDOWS_EPOCH
         self.encoding = "utf-8"
         self.iso_dates = iso_dates
+        self.repeat_header_and_footer = repeat_header_and_footer
 
         if not self.write_only:
             self._sheets.append(Worksheet(self))
